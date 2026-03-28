@@ -19,51 +19,70 @@ ALGORITHMS = [
 ALGO_DESC = {
     "K-Nearest Neighbors": (
         "Classifica pelo voto dos **k vizinhos mais próximos**. "
-        "Simples e intuitivo, mas sensível ao ruído e à escala dos dados."
+        "Simples e intuitivo, mas sensível ao ruído e à escala dos dados.\n\n"
+        "**Regra de decisão:**\n\n"
+        r"$$\hat{y} = \arg\max_{c} \sum_{i \in N_k(x)} \mathbf{1}[y_i = c]$$"
+        "\n\nonde $N_k(x)$ são os $k$ pontos mais próximos de $x$ pela distância Euclidiana. "
+        "Não há fase de treino — o dataset inteiro é o modelo."
     ),
     "SVM — RBF": (
-        "Encontra o hiperplano de **margem máxima** usando kernel radial (RBF). "
-        "Poderoso para fronteiras não-lineares. `C` controla a regularização e "
-        "`gamma` a largura do kernel."
+        "Encontra o hiperplano de **margem máxima** num espaço de alta dimensão induzido pelo kernel RBF:\n\n"
+        r"$$K(x, x') = \exp\left(-\gamma \|x - x'\|^2\right)$$"
+        "\n\n`C` controla o trade-off entre margem e erros de treino. "
+        "`gamma` controla o alcance de cada vetor de suporte: "
+        "valor alto → fronteira mais fechada; valor baixo → fronteira mais suave."
     ),
     "SVM — Linear": (
         "SVM com kernel linear — ótimo quando as classes são **linearmente separáveis**. "
-        "Rápido e eficiente em alta dimensão."
+        "Encontra o hiperplano que maximiza a margem entre as classes:\n\n"
+        r"$$\min_{w,b} \frac{1}{2}\|w\|^2 \quad \text{sujeito a} \quad y_i(w^\top x_i + b) \geq 1 - \xi_i$$"
+        "\n\n`C` penaliza as violações de margem ($\\xi_i$). "
+        "Rápido e eficiente em espaços de alta dimensão."
     ),
     "Decision Tree": (
-        "Divide o espaço recursivamente em **regiões retangulares**. "
-        "Muito interpretável, mas propenso a overfitting sem limitar a profundidade."
+        "Divide o espaço recursivamente escolhendo o atributo que maximiza o **ganho de informação**:\n\n"
+        r"$$\text{Gain}(S, f) = H(S) - \sum_{v} \frac{|S_v|}{|S|}\, H(S_v)$$"
+        "\n\nonde a entropia é:\n\n"
+        r"$$H(S) = -\sum_{c} p_c \log_2 p_c$$"
+        "\n\nMuito interpretável, mas propenso a overfitting sem limitar a profundidade."
     ),
     "Random Forest": (
-        "**Ensemble** de múltiplas árvores treinadas em subamostras aleatórias. "
-        "Robusto, preciso e resistente a overfitting."
+        "**Ensemble** de $T$ árvores de decisão, cada uma treinada num bootstrap do dataset "
+        "com subconjunto aleatório de features. A predição é por voto majoritário:\n\n"
+        r"$$\hat{y} = \text{majority}\{h_1(x),\, h_2(x),\, \ldots,\, h_T(x)\}$$"
+        "\n\nA média reduz a variância sem aumentar o viés — robusto e resistente a overfitting."
     ),
     "Gradient Boosting": (
-        "Constrói árvores **sequencialmente**, cada uma corrigindo os erros da anterior. "
-        "Alta acurácia, mas mais lento de treinar."
+        "Constrói um modelo aditivo de forma **sequencial**, ajustando cada nova árvore "
+        "ao gradiente negativo da loss da ensemble atual:\n\n"
+        r"$$F_m(x) = F_{m-1}(x) + \eta \cdot h_m(x)$$"
+        "\n\nonde $\\eta$ é a taxa de aprendizado e $h_m$ minimiza a loss no passo $m$. "
+        "Alta acurácia, mas sensível a overfitting com $\\eta$ elevado."
     ),
     "Neural Network (MLP)": (
-        "Rede neural densa **totalmente conectada**. Aprende fronteiras de decisão "
-        "arbitrariamente complexas com camadas ocultas configuráveis.\n\n"
+        "Rede neural densa **totalmente conectada**. Cada camada aplica uma transformação linear "
+        "seguida de não-linearidade:\n\n"
+        r"$$a^{(l)} = \sigma\!\left(W^{(l)}\, a^{(l-1)} + b^{(l)}\right)$$"
+        "\n\nTreinada por backpropagation. A camada de saída usa softmax para classificação multiclasse.\n\n"
         "**Funções de ativação:**\n"
-        "- `relu` — Rectified Linear Unit. Rápida e padrão para redes profundas.\n"
-        "- `tanh` — Tangente hiperbólica. Centrada em zero, boa para dados normalizados.\n"
-        "- `logistic` — Sigmoide. Saturação nas extremidades; pode sofrer vanishing gradient.\n\n"
+        "- `relu` — $\\sigma(z) = \\max(0, z)$. Evita vanishing gradient, padrão em redes profundas.\n"
+        "- `tanh` — $\\sigma(z) = \\tanh(z)$. Centrada em zero, boa para dados normalizados.\n"
+        "- `logistic` — $\\sigma(z) = 1/(1+e^{-z})$. Satura nas extremidades; evitar em redes profundas.\n\n"
         "**Solvers:**\n"
         "- `adam` — Adaptive Moment Estimation. Robusto e geralmente a melhor escolha.\n"
         "- `sgd` — Stochastic Gradient Descent. Mais controlável com learning rate manual."
     ),
     "Neural Network (PyTorch)": (
-        "Rede neural implementada em **PyTorch** com loop de treino customizado. "
-        "Oferece recursos não disponíveis no MLP do scikit-learn:\n\n"
-        "- **Dropout** — zera aleatoriamente neurônios durante o treino, reduzindo overfitting.\n"
-        "- **Batch Normalization** — normaliza as ativações entre camadas, estabilizando e "
-        "acelerando o treino.\n"
-        "- **Curva de loss de validação** — 15% dos dados de treino são separados para "
-        "monitorar overfitting epoch a epoch.\n"
-        "- **Distribuição dos pesos** — visualização do histograma de pesos por camada "
-        "após o treino.\n\n"
-        "O otimizador utilizado é sempre Adam. Todos os outros parâmetros são configuráveis."
+        "Mesma arquitetura MLP, implementada em **PyTorch** com loop de treino customizado "
+        "e regularizações adicionais:\n\n"
+        "**Dropout** — zera ativações com probabilidade $p$ durante o treino, "
+        "impedindo co-adaptação dos neurônios.\n\n"
+        "**Batch Normalization** — normaliza as entradas de cada camada para média zero e variância unitária:\n\n"
+        r"$$\hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \varepsilon}}, \qquad y = \gamma\hat{x} + \beta$$"
+        "\n\nEstabiliza e acelera o treino, especialmente em redes mais profundas.\n\n"
+        "- **Curva de loss de validação** — 15% dos dados separados para monitorar overfitting epoch a epoch.\n"
+        "- **Distribuição dos pesos** — histograma por camada após o treino.\n\n"
+        "Otimizador: **Adam**. Todos os outros parâmetros são configuráveis."
     ),
 }
 
