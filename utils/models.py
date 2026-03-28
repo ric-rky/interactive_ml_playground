@@ -26,11 +26,12 @@ ALGO_DESC = {
         "Não há fase de treino — o dataset inteiro é o modelo."
     ),
     "SVM — RBF": (
-        "Encontra o hiperplano de **margem máxima** num espaço de alta dimensão induzido pelo kernel RBF:\n\n"
+        "Mapeia os dados para um espaço de alta dimensão via kernel RBF e encontra o hiperplano de **margem máxima** nesse espaço:\n\n"
         r"$$K(x, x') = \exp\left(-\gamma \|x - x'\|^2\right)$$"
-        "\n\n`C` controla o trade-off entre margem e erros de treino. "
-        "`gamma` controla o alcance de cada vetor de suporte: "
-        "valor alto → fronteira mais fechada; valor baixo → fronteira mais suave."
+        "\n\nO treinamento resolve o seguinte problema de otimização:\n\n"
+        r"$$\min_{w,b,\xi}\; \frac{1}{2}\|w\|^2 + C\sum_i \xi_i \quad \text{s.t.} \quad y_i(w^\top\phi(x_i)+b) \geq 1 - \xi_i$$"
+        "\n\n`C` penaliza os erros de treino ($\\xi_i$): valor alto → menos erros, margem menor, risco de overfitting; valor baixo → mais tolerância, margem maior.\n\n"
+        "`gamma` controla o alcance do kernel: valor alto → cada ponto influencia só a vizinhança próxima (fronteira fechada); valor baixo → influência mais ampla (fronteira suave)."
     ),
     "SVM — Linear": (
         "SVM com kernel linear — ótimo quando as classes são **linearmente separáveis**. "
