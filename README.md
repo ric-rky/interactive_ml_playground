@@ -2,7 +2,7 @@
 
 Uma aplicação web interativa para explorar e comparar algoritmos de classificação. O objetivo é tornar o comportamento dos modelos visível: você ajusta os dados e os hiperparâmetros, treina, e vê o resultado imediatamente na forma de fronteiras de decisão, métricas, curvas de aprendizado e muito mais.
 
-Construído com Streamlit, scikit-learn e Plotly.
+Construído com Streamlit, scikit-learn, PyTorch e Plotly.
 
 ## Funcionalidades
 
@@ -21,10 +21,12 @@ Há um toggle que substitui a fronteira binária por um mapa de confiança: o fu
 
 ### Rede Neural
 
-Aba dedicada ao Neural Network (MLP):
+Aba dedicada aos modelos de rede neural (MLP e PyTorch):
 
 - Diagrama interativo da arquitetura da rede, atualizado em tempo real conforme voce ajusta os sliders de camadas e neuronios, antes mesmo de treinar
-- Curva de loss por iteracao apos o treino, com indicador de convergencia
+- Curva de loss por iteracao/epoch apos o treino, com indicador de convergencia
+- Curva de loss de validacao (apenas PyTorch) — 15% dos dados separados automaticamente para monitorar overfitting epoch a epoch
+- Distribuicao dos pesos por camada apos o treino (apenas PyTorch) — histograma interativo para inspecionar a inicializacao e o comportamento do otimizador
 - Grafico comparativo das funcoes de ativacao mais comuns (ReLU, Tanh, Sigmoid, Leaky ReLU)
 
 ### Comparacao de Modelos
@@ -42,6 +44,7 @@ Treina todos os 7 algoritmos com hiperparametros padrao sobre o mesmo dataset e 
 | Random Forest | numero de arvores, profundidade maxima |
 | Gradient Boosting | numero de estimadores, taxa de aprendizado |
 | Neural Network (MLP) | camadas ocultas, neuronios por camada, taxa de aprendizado, funcao de ativacao, solver |
+| Neural Network (PyTorch) | camadas ocultas, neuronios por camada, taxa de aprendizado, funcao de ativacao, epochs, batch size, dropout, batch normalization |
 
 ## Datasets disponíveis
 
@@ -67,7 +70,8 @@ ml_playground/
 ├── utils/
 │   ├── datasets.py         # Geracao dos datasets
 │   ├── models.py           # Instanciacao dos classificadores
-│   └── plots.py            # Todos os graficos (Plotly)
+│   ├── plots.py            # Todos os graficos (Plotly)
+│   └── torch_model.py      # PyTorchMLP — wrapper scikit-learn sobre rede PyTorch
 └── .streamlit/
     └── config.toml         # Tema e configuracao do servidor
 ```
@@ -103,4 +107,5 @@ scikit-learn>=1.4.0
 numpy>=1.26.0
 plotly>=6.0.0
 pandas>=2.2.0
+torch>=2.0.0
 ```

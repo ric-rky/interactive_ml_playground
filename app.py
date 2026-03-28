@@ -16,6 +16,7 @@ from utils.plots import (
     plot_feature_importance, plot_compare,
     plot_loss_curve, plot_network_arch, plot_activations,
     plot_roc, plot_probability_boundary, plot_learning_curves,
+    plot_weight_distribution,
 )
 
 # ── Page config ────────────────────────────────────────────────────────────────
@@ -98,6 +99,16 @@ with st.sidebar:
         p["activation"] = st.selectbox("Ativação", ["relu", "tanh", "logistic"])
         p["solver"]     = st.selectbox("Solver", ["adam", "sgd"])
 
+    elif algo == "Neural Network (PyTorch)":
+        p["layers"]     = st.slider("Camadas ocultas", 1, 6, 2)
+        p["neurons"]    = st.slider("Neurônios / camada", 4, 256, 64, 4)
+        p["lr"]         = st.select_slider("Taxa de aprendizado", [0.0001, 0.001, 0.01, 0.1], 0.001)
+        p["activation"] = st.selectbox("Ativação", ["relu", "tanh", "logistic"])
+        p["epochs"]     = st.slider("Epochs", 10, 300, 100, 10)
+        p["batch_size"] = st.select_slider("Batch size", [16, 32, 64, 128, 256], 32)
+        p["dropout"]    = st.slider("Dropout", 0.0, 0.5, 0.0, 0.05)
+        p["batch_norm"] = st.toggle("Batch Normalization", value=False)
+
     st.divider()
     btn_train = st.button("Treinar modelo", type="primary", use_container_width=True)
     btn_cmp   = st.button("Comparar todos os modelos", use_container_width=True)
@@ -129,7 +140,22 @@ c4.metric("Classes", len(np.unique(y)))
 # ── Train ─────────────────────────────────────────────────────────────────────
 if btn_train:
     clf = build_clf(algo, p)
-    clf.fit(Xtr, ytr)
+
+    if algo == "Neural Network (PyTorch)":
+        _progress = st.progress(0, text="Iniciando treino...")
+        _status   = st.empty()
+
+        def _torch_cb(ep, total, tr_loss, val_loss):
+            _progress.progress(ep / total,
+                               text=f"Epoch {ep}/{total}  |  loss treino: {tr_loss:.4f}  |  loss val: {val_loss:.4f}")
+
+        clf.fit(Xtr, ytr, progress_callback=_torch_cb)
+        _progress.empty()
+        _status.empty()
+    else:
+        with st.spinner("Treinando..."):
+            clf.fit(Xtr, ytr)
+
     st.session_state["clf"]  = clf
     st.session_state["algo"] = algo
     st.session_state["p"]    = p.copy()
@@ -275,38 +301,39 @@ with tab_met:
 
 # ── Tab 3 — Neural Network ─────────────────────────────────────────────────────
 with tab_nn:
-    # Architecture diagram — live preview from sidebar params
-    is_mlp_selected = (algo == "Neural Network (MLP)")
-    is_mlp_trained  = (
-        "clf" in st.session_state
-        and st.session_state.get("algo") == "Neural Network (MLP)"
-    )
+    NN_ALGOS = ("Neural Network (MLP)", "Neural Network (PyTorch)")
+
+    is_nn_selected = algo in NN_ALGOS
+    trained_algo   = st.session_state.get("algo", "")
+    is_nn_trained  = "clf" in st.session_state and trained_algo in NN_ALGOS
+    is_torch_trained = "clf" in st.session_state and trained_algo == "Neural Network (PyTorch)"
 
     col_arch, col_act = st.columns([1.4, 1])
 
     with col_arch:
         st.markdown("#### Arquitetura da Rede")
-        if is_mlp_selected:
-            n_classes  = len(np.unique(y))
-            hidden     = [p["neurons"]] * p["layers"]
+        if is_nn_selected:
+            n_classes   = len(np.unique(y))
+            hidden      = [p["neurons"]] * p["layers"]
             layer_sizes = [2] + hidden + [n_classes]
             st.plotly_chart(plot_network_arch(layer_sizes), use_container_width=True)
-            st.caption(
-                f"🔵 Entrada (2)  →  🟣 {p['layers']}× oculta ({p['neurons']})  "
-                f"→  🟢 Saída ({n_classes})  |  "
-                f"Ativação: `{p.get('activation','relu')}`  |  Solver: `{p.get('solver','adam')}`"
-            )
-        elif is_mlp_trained:
-            clf_nn = st.session_state["clf"]
-            saved_p = st.session_state.get("p", {})
-            n_classes  = len(np.unique(y))
-            hidden     = [saved_p.get("neurons", 64)] * saved_p.get("layers", 2)
+            act  = p.get("activation", "relu")
+            info = f"Entrada (2)  →  {p['layers']}x oculta ({p['neurons']})  →  Saída ({n_classes})  |  Ativação: `{act}`"
+            if algo == "Neural Network (PyTorch)":
+                info += f"  |  Dropout: `{p.get('dropout', 0.0)}`  |  BatchNorm: `{p.get('batch_norm', False)}`"
+            else:
+                info += f"  |  Solver: `{p.get('solver', 'adam')}`"
+            st.caption(info)
+        elif is_nn_trained:
+            saved_p     = st.session_state.get("p", {})
+            n_classes   = len(np.unique(y))
+            hidden      = [saved_p.get("neurons", 64)] * saved_p.get("layers", 2)
             layer_sizes = [2] + hidden + [n_classes]
             st.plotly_chart(plot_network_arch(layer_sizes), use_container_width=True)
         else:
             st.info(
-                "Selecione **Neural Network (MLP)** na barra lateral para visualizar "
-                "a arquitetura em tempo real conforme você ajusta os hiperparâmetros."
+                "Selecione **Neural Network (MLP)** ou **Neural Network (PyTorch)** "
+                "na barra lateral para visualizar a arquitetura em tempo real."
             )
 
     with col_act:
@@ -316,34 +343,53 @@ with tab_nn:
             "**ReLU** — padrão moderno, evita vanishing gradient  \n"
             "**Tanh** — centrada em zero, boa para dados normalizados  \n"
             "**Sigmoid** — satura nas extremidades, evitar em redes profundas  \n"
-            "**Leaky ReLU** — corrige o 'neurônio morto' do ReLU"
+            "**Leaky ReLU** — corrige o neurônio morto do ReLU"
         )
 
-    # Loss curve — only when MLP was trained
-    if is_mlp_trained:
+    # Loss curve + extras
+    if is_nn_trained:
         st.divider()
-        clf_nn = st.session_state["clf"]
+        clf_nn  = st.session_state["clf"]
+        is_torch = isinstance(clf_nn, __import__("utils.torch_model", fromlist=["PyTorchMLP"]).PyTorchMLP)
 
-        # Convergence info
         ci1, ci2, ci3 = st.columns(3)
         converged = clf_nn.n_iter_ < clf_nn.max_iter
-        ci1.metric("Iterações", clf_nn.n_iter_)
-        ci2.metric("Loss final", f"{clf_nn.loss_curve_[-1]:.5f}")
-        ci3.metric("Convergiu?", "✅ Sim" if converged else "⚠️ Não (aumentar max_iter)")
+        ci1.metric("Epochs / Iterações", clf_nn.n_iter_)
+        ci2.metric("Loss final (treino)", f"{clf_nn.loss_curve_[-1]:.5f}")
+        ci3.metric("Convergiu?", "Sim" if converged else "Nao (aumentar epochs)")
 
-        st.markdown("#### Curva de Loss")
-        st.plotly_chart(plot_loss_curve(clf_nn.loss_curve_), use_container_width=True)
+        if is_torch:
+            st.markdown("#### Curva de Loss — Treino vs Validação")
+            st.plotly_chart(
+                plot_loss_curve(clf_nn.train_losses_, clf_nn.val_losses_),
+                use_container_width=True,
+            )
+            st.caption(
+                "Loss de validação calculada em 15% dos dados de treino separados antes do fit. "
+                "Se a curva de validação sobe enquanto a de treino desce, o modelo está sofrendo overfitting."
+            )
+
+            st.markdown("#### Distribuição dos Pesos")
+            st.plotly_chart(
+                plot_weight_distribution(clf_nn.model_),
+                use_container_width=True,
+            )
+            st.caption(
+                "Pesos concentrados próximos de zero indicam boa inicialização. "
+                "Distribuições muito largas ou assimétricas podem sugerir instabilidade no treino."
+            )
+        else:
+            st.markdown("#### Curva de Loss")
+            st.plotly_chart(plot_loss_curve(clf_nn.loss_curve_), use_container_width=True)
+
         if not converged:
             st.warning(
                 "O modelo atingiu o limite de iterações sem convergir. "
-                "Tente aumentar a taxa de aprendizado ou reduzir a complexidade da rede."
+                "Tente aumentar epochs/max_iter ou a taxa de aprendizado."
             )
-    elif not is_mlp_selected and "clf" in st.session_state:
+    elif not is_nn_selected and "clf" in st.session_state:
         st.divider()
-        st.info(
-            "A curva de loss e detalhes de convergência só estão disponíveis "
-            "para o **Neural Network (MLP)**."
-        )
+        st.info("Curva de loss e detalhes de convergência disponíveis apenas para os modelos de rede neural.")
 
 # ── Tab 4 — Compare ────────────────────────────────────────────────────────────
 with tab_cmp:

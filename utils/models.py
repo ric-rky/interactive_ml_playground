@@ -13,6 +13,7 @@ ALGORITHMS = [
     "Random Forest",
     "Gradient Boosting",
     "Neural Network (MLP)",
+    "Neural Network (PyTorch)",
 ]
 
 ALGO_DESC = {
@@ -51,6 +52,18 @@ ALGO_DESC = {
         "**Solvers:**\n"
         "- `adam` — Adaptive Moment Estimation. Robusto e geralmente a melhor escolha.\n"
         "- `sgd` — Stochastic Gradient Descent. Mais controlável com learning rate manual."
+    ),
+    "Neural Network (PyTorch)": (
+        "Rede neural implementada em **PyTorch** com loop de treino customizado. "
+        "Oferece recursos não disponíveis no MLP do scikit-learn:\n\n"
+        "- **Dropout** — zera aleatoriamente neurônios durante o treino, reduzindo overfitting.\n"
+        "- **Batch Normalization** — normaliza as ativações entre camadas, estabilizando e "
+        "acelerando o treino.\n"
+        "- **Curva de loss de validação** — 15% dos dados de treino são separados para "
+        "monitorar overfitting epoch a epoch.\n"
+        "- **Distribuição dos pesos** — visualização do histograma de pesos por camada "
+        "após o treino.\n\n"
+        "O otimizador utilizado é sempre Adam. Todos os outros parâmetros são configuráveis."
     ),
 }
 
@@ -92,5 +105,17 @@ def build_clf(name, p):
             learning_rate_init=p["lr"],
             max_iter=800,
             random_state=42,
+        )
+    if name == "Neural Network (PyTorch)":
+        from utils.torch_model import PyTorchMLP
+        layers = tuple([p["neurons"]] * p["layers"])
+        return PyTorchMLP(
+            hidden_layer_sizes=layers,
+            activation=p.get("activation", "relu"),
+            lr=p["lr"],
+            epochs=p.get("epochs", 100),
+            batch_size=p.get("batch_size", 32),
+            dropout=p.get("dropout", 0.0),
+            batch_norm=p.get("batch_norm", False),
         )
     raise ValueError(f"Unknown algorithm: {name}")

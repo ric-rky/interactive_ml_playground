@@ -241,22 +241,68 @@ def plot_network_arch(layer_sizes):
     return fig
 
 
-def plot_loss_curve(loss_curve):
-    """MLP training loss history."""
-    iters = list(range(1, len(loss_curve) + 1))
+def plot_loss_curve(train_losses, val_losses=None):
+    """Training (and optionally validation) loss per iteration/epoch."""
+    xs = list(range(1, len(train_losses) + 1))
+    label = "Epoch" if val_losses is not None else "Iteração"
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=iters, y=loss_curve,
+        x=xs, y=train_losses,
         mode="lines",
         line=dict(color="#a78bfa", width=2.5),
-        name="Loss",
-        fill="tozeroy",
+        name="Treino",
+        fill="tozeroy" if val_losses is None else None,
         fillcolor="rgba(167,139,250,0.08)",
-        hovertemplate="Iteração %{x}<br>Loss: %{y:.4f}<extra></extra>",
+        hovertemplate=f"{label} %{{x}}<br>Loss treino: %{{y:.4f}}<extra></extra>",
     ))
-    fig.update_xaxes(title="Iteração", gridcolor="rgba(255,255,255,0.05)")
-    fig.update_yaxes(title="Loss", gridcolor="rgba(255,255,255,0.05)")
-    _base_layout(fig, "Curva de Loss — Treinamento", h=280)
+
+    if val_losses is not None:
+        fig.add_trace(go.Scatter(
+            x=xs, y=val_losses,
+            mode="lines",
+            line=dict(color="#60a5fa", width=2.5, dash="dot"),
+            name="Validação (15%)",
+            hovertemplate=f"{label} %{{x}}<br>Loss val: %{{y:.4f}}<extra></extra>",
+        ))
+
+    title = "Curva de Loss — Treino vs Validação" if val_losses is not None else "Curva de Loss — Treinamento"
+    fig.update_xaxes(title=label, gridcolor="rgba(255,255,255,0.05)")
+    fig.update_yaxes(title="Loss (Cross-Entropy)", gridcolor="rgba(255,255,255,0.05)")
+    _base_layout(fig, title, h=300)
+    return fig
+
+
+def plot_weight_distribution(model):
+    """Histogram of weight values per layer of a PyTorch model."""
+    import torch
+
+    named_weights = {
+        name: param.detach().numpy().flatten()
+        for name, param in model.named_parameters()
+        if "weight" in name
+    }
+
+    if not named_weights:
+        return go.Figure()
+
+    fig = go.Figure()
+    for i, (name, weights) in enumerate(named_weights.items()):
+        # Short label: "net.0.weight" -> "Camada 1"
+        layer_idx = i + 1
+        fig.add_trace(go.Histogram(
+            x=weights,
+            name=f"Camada {layer_idx}",
+            opacity=0.65,
+            nbinsx=60,
+            marker_color=PALETTE[i % len(PALETTE)],
+            hovertemplate="Peso: %{x:.3f}<br>Count: %{y}<extra></extra>",
+        ))
+
+    fig.update_layout(barmode="overlay")
+    fig.update_xaxes(title="Valor do peso", gridcolor="rgba(255,255,255,0.05)")
+    fig.update_yaxes(title="Frequencia", gridcolor="rgba(255,255,255,0.05)")
+    _base_layout(fig, "Distribuição dos Pesos por Camada", h=300)
     return fig
 
 
