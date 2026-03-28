@@ -1,105 +1,105 @@
 # ML Playground
 
-Uma aplicação web interativa para explorar e comparar algoritmos de classificação. O objetivo é tornar o comportamento dos modelos visível: você ajusta os dados e os hiperparâmetros, treina, e vê o resultado imediatamente na forma de fronteiras de decisão, métricas, curvas de aprendizado e muito mais.
+An interactive web application for exploring and comparing classification algorithms. The goal is to make model behavior visible: adjust the data and hyperparameters, train, and immediately see the results as decision boundaries, metrics, learning curves, and more.
 
-Construído com Streamlit, scikit-learn, PyTorch e Plotly.
+Built with Streamlit, scikit-learn, PyTorch, and Plotly.
 
-## Funcionalidades
+## Features
 
-### Fronteira de Decisão
+### Decision Boundary
 
-Exibe a região de decisão do classificador treinado sobre o espaço de features, com os pontos de treino e teste sobrepostos. Pontos de teste classificados incorretamente são destacados separadamente.
+Displays the classifier's decision region over the feature space, with training and test points overlaid. Incorrectly classified test points are highlighted separately.
 
-Há um toggle que substitui a fronteira binária por um mapa de confiança: o fundo passa a mostrar a probabilidade máxima predita em cada ponto do espaço, tornando visível onde o modelo tem certeza e onde ele hesita.
+A toggle replaces the binary boundary with a confidence map: the background shows the maximum predicted probability at each point in the space, making it visible where the model is certain and where it hesitates.
 
-### Metricas
+### Metrics
 
-- Matriz de confusao normalizada por linha
-- Tabela com precisao, recall, F1 e suporte por classe
-- Curva ROC com AUC para classificacao binaria; one-vs-rest para multiclasse
-- Curvas de aprendizado (acuracia de treino e validacao cruzada em funcao do tamanho do conjunto de treino), calculadas sob demanda com 5-fold CV
+- Confusion matrix normalized by row
+- Table with precision, recall, F1, and support per class
+- ROC curve with AUC for binary classification; one-vs-rest for multiclass
+- Learning curves (training and cross-validation accuracy as a function of training set size), computed on demand with 5-fold CV
 
-### Rede Neural
+### Neural Network
 
-Aba dedicada aos modelos de rede neural (MLP e PyTorch):
+A dedicated tab for neural network models (MLP and PyTorch):
 
-- Diagrama interativo da arquitetura da rede, atualizado em tempo real conforme voce ajusta os sliders de camadas e neuronios, antes mesmo de treinar
-- Curva de loss por iteracao/epoch apos o treino, com indicador de convergencia
-- Curva de loss de validacao (apenas PyTorch) — 15% dos dados separados automaticamente para monitorar overfitting epoch a epoch
-- Distribuicao dos pesos por camada apos o treino (apenas PyTorch) — histograma interativo para inspecionar a inicializacao e o comportamento do otimizador
-- Grafico comparativo das funcoes de ativacao mais comuns (ReLU, Tanh, Sigmoid, Leaky ReLU)
+- Interactive architecture diagram, updated in real time as you adjust the layer and neuron sliders, even before training
+- Loss curve per iteration/epoch after training, with a convergence indicator
+- Validation loss curve (PyTorch only) — 15% of data automatically held out to monitor overfitting epoch by epoch
+- Weight distribution per layer after training (PyTorch only) — interactive histogram to inspect initialization and optimizer behavior
+- Comparison chart of the most common activation functions (ReLU, Tanh, Sigmoid, Leaky ReLU)
 
-### Comparacao de Modelos
+### Model Comparison
 
-Treina todos os 7 algoritmos com hiperparametros padrao sobre o mesmo dataset e exibe um grafico de barras comparando acuracia de treino e teste.
+Trains all 7 algorithms with default hyperparameters on the same dataset and displays a bar chart comparing training and test accuracy.
 
-## Algoritmos disponíveis
+## Available Algorithms
 
-| Algoritmo | Hiperparametros configuráveis |
+| Algorithm | Configurable Hyperparameters |
 |---|---|
-| K-Nearest Neighbors | k (numero de vizinhos) |
-| SVM com kernel RBF | C, gamma |
-| SVM com kernel Linear | C |
-| Decision Tree | profundidade maxima |
-| Random Forest | numero de arvores, profundidade maxima |
-| Gradient Boosting | numero de estimadores, taxa de aprendizado |
-| Neural Network (MLP) | camadas ocultas, neuronios por camada, taxa de aprendizado, funcao de ativacao, solver |
-| Neural Network (PyTorch) | camadas ocultas, neuronios por camada, taxa de aprendizado, funcao de ativacao, epochs, batch size, dropout, batch normalization |
+| K-Nearest Neighbors | k (number of neighbors) |
+| SVM with RBF kernel | C, gamma |
+| SVM with Linear kernel | C |
+| Decision Tree | max depth |
+| Random Forest | number of trees, max depth |
+| Gradient Boosting | number of estimators, learning rate |
+| Neural Network (MLP) | hidden layers, neurons per layer, learning rate, activation function, solver |
+| Neural Network (PyTorch) | hidden layers, neurons per layer, learning rate, activation function, epochs, batch size, dropout, batch normalization |
 
-## Datasets disponíveis
+## Available Datasets
 
-| Dataset | Descricao |
+| Dataset | Description |
 |---|---|
-| Moons | Duas classes em forma de crescente |
-| Circles | Circulos concentricos |
-| XOR | Padrao XOR classico |
-| Spiral | Duas espirais entrelacadas |
-| Spiral (3) | Tres espirais entrelacadas, problema multiclasse dificil |
-| Tabuleiro | Padrao xadrez, requer fronteiras periodicas e nao-lineares |
-| Blobs (2) | Dois grupos gaussianos |
-| Blobs (3) | Tres grupos gaussianos |
+| Moons | Two crescent-shaped classes |
+| Circles | Concentric circles |
+| XOR | Classic XOR pattern |
+| Spiral | Two interleaved spirals |
+| Spiral (3) | Three interleaved spirals, hard multiclass problem |
+| Checkerboard | Checkerboard pattern, requires periodic and non-linear boundaries |
+| Blobs (2) | Two Gaussian clusters |
+| Blobs (3) | Three Gaussian clusters |
 
-Os parametros de numero de amostras, nivel de ruido, proporcao treino/teste e seed sao controlaveis pela barra lateral.
+The number of samples, noise level, train/test split ratio, and random seed are all controllable from the sidebar.
 
-## Estrutura do projeto
+## Project Structure
 
 ```
 ml_playground/
-├── app.py                  # Aplicacao principal (Streamlit)
+├── app.py                  # Main application (Streamlit)
 ├── requirements.txt
 ├── utils/
-│   ├── datasets.py         # Geracao dos datasets
-│   ├── models.py           # Instanciacao dos classificadores
-│   ├── plots.py            # Todos os graficos (Plotly)
-│   └── torch_model.py      # PyTorchMLP — wrapper scikit-learn sobre rede PyTorch
+│   ├── datasets.py         # Dataset generation
+│   ├── models.py           # Classifier instantiation
+│   ├── plots.py            # All charts (Plotly)
+│   └── torch_model.py      # PyTorchMLP — scikit-learn wrapper over a PyTorch network
 └── .streamlit/
-    └── config.toml         # Tema e configuracao do servidor
+    └── config.toml         # Theme and server configuration
 ```
 
-## Instalação e execução
+## Installation and Usage
 
-**Requisitos:** Python 3.10 ou superior.
+**Requirements:** Python 3.10 or higher.
 
 ```bash
-# Clone o repositorio
-git clone <url-do-repositorio>
+# Clone the repository
+git clone https://github.com/ric-rky/interactive_ml_playground
 cd ml_playground
 
-# Crie e ative o ambiente virtual
+# Create and activate a virtual environment
 python -m venv venv
 venv\Scripts\activate        # Windows
 source venv/bin/activate     # Linux / macOS
 
-# Instale as dependencias
+# Install dependencies
 pip install -r requirements.txt
 
-# Execute a aplicacao
+# Run the application
 streamlit run app.py
 ```
 
-A aplicacao abre automaticamente no navegador em `http://localhost:8501`.
+The application opens automatically in the browser at `http://localhost:8501`.
 
-## Dependências
+## Dependencies
 
 ```
 streamlit>=1.35.0
