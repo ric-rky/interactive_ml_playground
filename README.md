@@ -35,6 +35,107 @@ Trains all 7 algorithms with default hyperparameters on the same dataset and dis
 
 ## Available Algorithms
 
+### K-Nearest Neighbors
+
+Classifies a point by majority vote among its `k` closest neighbors under Euclidean distance:
+
+$$\hat{y} = \arg\max_{c} \sum_{i \in N_k(x)} \mathbf{1}[y_i = c]$$
+
+No training phase — the entire dataset is the model. Sensitive to feature scale and noisy labels.
+
+**Hyperparameters:** `k` (number of neighbors)
+
+---
+
+### SVM — RBF Kernel
+
+Finds the maximum-margin hyperplane in a high-dimensional space induced by the RBF kernel:
+
+$$K(x, x') = \exp\left(-\gamma \|x - x'\|^2\right)$$
+
+`C` controls the trade-off between margin width and training errors; `gamma` controls the reach of each support vector (high gamma → tight fit, low gamma → smoother boundary).
+
+**Hyperparameters:** `C`, `gamma`
+
+---
+
+### SVM — Linear Kernel
+
+Same objective as RBF-SVM, but the decision boundary is a hyperplane in the original feature space:
+
+$$f(x) = w^\top x + b, \quad \text{with } \|w\| \text{ minimized subject to } y_i f(x_i) \geq 1 - \xi_i$$
+
+Efficient on linearly separable data; `C` penalizes margin violations.
+
+**Hyperparameters:** `C`
+
+---
+
+### Decision Tree
+
+Recursively partitions the feature space by choosing the split that maximizes information gain (reduction in entropy):
+
+$$\text{Gain}(S, f) = H(S) - \sum_{v} \frac{|S_v|}{|S|} H(S_v), \quad H(S) = -\sum_{c} p_c \log_2 p_c$$
+
+Fully interpretable; prone to overfitting without depth constraints.
+
+**Hyperparameters:** max depth
+
+---
+
+### Random Forest
+
+An ensemble of `T` decision trees, each trained on a bootstrap sample with a random subset of features at each split. Predictions are aggregated by majority vote:
+
+$$\hat{y} = \text{majority}\{h_1(x), h_2(x), \ldots, h_T(x)\}$$
+
+Variance reduction through averaging makes it robust to overfitting.
+
+**Hyperparameters:** number of trees, max depth
+
+---
+
+### Gradient Boosting
+
+Builds an additive model by fitting each new tree to the residuals (negative gradient of the loss) of the current ensemble:
+
+$$F_m(x) = F_{m-1}(x) + \eta \cdot h_m(x)$$
+
+where `η` is the learning rate and `h_m` minimizes the loss at step `m`. Highly accurate but sensitive to overfitting when the learning rate is too high.
+
+**Hyperparameters:** number of estimators, learning rate
+
+---
+
+### Neural Network (MLP)
+
+A feedforward network where each layer applies a linear transformation followed by a non-linear activation:
+
+$$a^{(l)} = \sigma\left(W^{(l)} a^{(l-1)} + b^{(l)}\right)$$
+
+Trained by backpropagation via gradient descent. The final layer uses softmax for multiclass output.
+
+**Hyperparameters:** hidden layers, neurons per layer, learning rate, activation function, solver
+
+---
+
+### Neural Network (PyTorch)
+
+Same MLP architecture as above, with additional regularization techniques:
+
+- **Dropout:** randomly zeros activations during training with probability `p`, preventing co-adaptation of neurons
+- **Batch Normalization:** normalizes layer inputs to zero mean and unit variance, stabilizing and accelerating training:
+
+$$\hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \quad y = \gamma \hat{x} + \beta$$
+
+Trained with Adam optimizer and a held-out validation set for monitoring overfitting.
+
+**Hyperparameters:** hidden layers, neurons per layer, learning rate, activation function, epochs, batch size, dropout, batch normalization
+
+---
+
+### Summary Table
+
 | Algorithm | Configurable Hyperparameters |
 |---|---|
 | K-Nearest Neighbors | k (number of neighbors) |
